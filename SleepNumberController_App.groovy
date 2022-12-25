@@ -437,20 +437,24 @@ void configureVariableRefreshInterval() {
 def findBedPage() {
   def responseData = getBedData()
   List devices = getBedDevices()
-  def sidesSeen = []
   def childDevices = []
   dynamicPage(name: "findBedPage") {
-    if (responseData.beds.size() > 0) {
+    if (responseData && responseData.beds.size() > 0) {
       responseData.beds.each { bed ->
+        def sidesSeen = []
         section("Bed: ${bed.bedId}") {
           if (devices.size() > 0) {
             for (def dev : devices) {
+              if (dev.getState().bedId != bed.bedId) {
+                debug "bedId's don't match, skipping"
+                continue
+              }
               if (!dev.getState().type || dev.getState()?.type == "presence") {
                 if (!dev.getState().type) {
                   childDevices << dev.getState().side
                 }
                 sidesSeen << dev.getState().side
-                href "selectBedPage", title: dev.label, description: "Click to modify",
+                href "selectBedPage", name: "Bed: ${bed.bedId}", title: dev.label, description: "Click to modify",
                     params: [bedId: bed.bedId, side: dev.getState().side, label: dev.label]
               }
             }
@@ -458,22 +462,22 @@ def findBedPage() {
               input "createNewChildDevices", "bool", title: "Create new child device types", defaultValue: false, submitOnChange: true
               if (settings.createNewChildDevices) {
                 if (!childDevices.contains("Left")) {
-                  href "selectBedPage", title: "Left Side", description: "Click to create",
+                  href "selectBedPage", name: "Bed: ${bed.bedId}", title: "Left Side", description: "Click to create",
                       params: [bedId: bed.bedId, side: "Left", label: ""]
                 }
                 if (!childDevices.contains("Right")) {
-                  href "selectBedPage", title: "Right Side", description: "Click to create",
+                  href "selectBedPage", name: "Bed: ${bed.bedId}", title: "Right Side", description: "Click to create",
                       params: [bedId: bed.bedId, side: "Right", label: ""]
                 }
               }
             }
           }
           if (!sidesSeen.contains("Left")) {
-            href "selectBedPage", title: "Left Side", description: "Click to create",
+            href "selectBedPage", name: "Bed: ${bed.bedId}", title: "Left Side", description: "Click to create",
                 params: [bedId: bed.bedId, side: "Left", label: ""]
           }
           if (!sidesSeen.contains("Right")) {
-            href "selectBedPage", title: "Right Side", description: "Click to create",
+            href "selectBedPage", name: "Bed: ${bed.bedId}", title: "Right Side", description: "Click to create",
                 params: [bedId: bed.bedId, side: "Right", label: ""]
           }
         }
@@ -501,17 +505,19 @@ def selectBedPage(params) {
       return
     }
     section {
-      paragraph """<b>Instructions</b>
-Enter a name, then choose whether or not to use child devices or a virtual container for the devices and then choose the types of devices to create.
-Note that if using child devices, the parent device will contain all the special commands along with bed specific status while the children are simple
-switches or dimmers.  Otherwise, all devices are the same on Hubitat, the only difference is how they behave to dim and on/off commands.  This is so that they may be used with external assistants such as Google Assistant or Amazon Alexa.  If you don't care about such use cases (and only want RM control or just presence), you can just use the presence type.
-<br>
-See <a href="https://community.hubitat.com/t/release-virtual-container-driver/4440" target=_blank>this post</a> for virtual container.
-"""
-        paragraph """<b>Device information</b>
-Bed ID: ${params.bedId}
-Side: ${params.side}
-""" 
+      paragraph "<b>Instructions</b>" +
+                "<br>" +
+                "Enter a name, then choose whether or not to use child devices or a virtual container for the devices and then choose the types of devices to create." +
+                "<br><br>" +
+                "Note that if using child devices, the parent device will contain all the special commands along with bed specific status while the children are simple " +
+                "switches or dimmers.  Otherwise, all devices are the same on Hubitat. The only difference is how they behave to dim and on/off commands. " +
+                "This is so that they may be used with external assistants such as Google Assistant or Amazon Alexa.  If you don't care about such use cases (and only want RM control or just presence), you can just use the presence type." +
+                "<br><br>" + 
+                "See <a href=\"https://community.hubitat.com/t/release-virtual-container-driver/4440\" target=_blank>this post</a> for virtual container."
+      paragraph """<b>Device information</b>
+                   Bed ID: ${params.bedId}
+                   Side: ${params.side}
+                """ 
     }
     section {
       def name = settings.newDeviceName?.trim() ? settings.newDeviceName : params.label?.trim() ? params.label : newDeviceName
@@ -599,6 +605,7 @@ Side: ${params.side}
       }
       msg += "</ol>"
       paragraph msg
+      newDeviceName = ""
       href "createBedPage", title: "Create Devices", description: null,
       params: [
         presence: params.present,
