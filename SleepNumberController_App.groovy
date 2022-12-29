@@ -512,19 +512,17 @@ def selectBedPage(params) {
       return
     }
     section {
-      paragraph "<b>Instructions</b>" +
-                "<br>" +
-                "Enter a name, then choose whether or not to use child devices or a virtual container for the devices and then choose the types of devices to create." +
-                "<br><br>" +
-                "Note that if using child devices, the parent device will contain all the special commands along with bed specific status while the children are simple " +
-                "switches or dimmers.  Otherwise, all devices are the same on Hubitat. The only difference is how they behave to dim and on/off commands. " +
-                "This is so that they may be used with external assistants such as Google Assistant or Amazon Alexa.  If you don't care about such use cases (and only want RM control or just presence), you can just use the presence type." +
-                "<br><br>" + 
-                "See <a href=\"https://community.hubitat.com/t/release-virtual-container-driver/4440\" target=_blank>this post</a> for virtual container."
-      paragraph """<b>Device information</b>
-                   Bed ID: ${params.bedId}
-                   Side: ${params.side}
-                """ 
+      paragraph """<b>Instructions</b>
+Enter a name, then choose whether or not to use child devices or a virtual container for the devices and then choose the types of devices to create.
+Note that if using child devices, the parent device will contain all the special commands along with bed specific status while the children are simple
+switches or dimmers.  Otherwise, all devices are the same on Hubitat, the only difference is how they behave to dim and on/off commands.  This is so that they may be used with external assistants such as Google Assistant or Amazon Alexa.  If you don't care about such use cases (and only want RM control or just presence), you can just use the presence type.
+<br>
+See <a href="https://community.hubitat.com/t/release-virtual-container-driver/4440" target=_blank>this post</a> for virtual container.
+"""
+        paragraph """<b>Device information</b>
+Bed ID: ${params.bedId}
+Side: ${params.side}
+""" 
     }
     section {
       def name = settings.newDeviceName?.trim() ? settings.newDeviceName : params.label?.trim() ? params.label : newDeviceName
